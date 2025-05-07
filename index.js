@@ -13,13 +13,16 @@ app.use(express.static('dist'))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body '))
 
 const errorHandler = (error, request, response, next) => {
+  console.log("ERROR HANDLER");
+  console.error(error.name)
   console.error(error.message)
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  } else if (error.name === 'ContentMissing') {
+    return response.status(400).json({ error: 'Name and number cannot be blank' })
   }
-  if (error.name === 'content missing') {
-    return response.status(400).send({ error: 'content missing' })
-  } 
 
   next(error)
 }
@@ -89,7 +92,8 @@ app.delete('/api/persons/:id', (request, response, next) => {
 app.post('/api/persons', (request,response, next) => {
   const body = request.body
   if(!body.name || !body.number) {
-    const error = new Error('content missing')
+    const error = new Error('ContentMissing')
+    error.name = 'ContentMissing'
     error.status = 400
     return next(error)
   }
@@ -99,9 +103,11 @@ app.post('/api/persons', (request,response, next) => {
     number: body.number
   })
 
-  person.save().then(savedNote => {
-    response.json(savedNote)
-  })
+  person.save()
+    .then(savedNote => {
+      response.json(savedNote)
+    })
+    .catch(error => next(error))
 })
 
 app.use(errorHandler)
