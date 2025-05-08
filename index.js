@@ -4,7 +4,7 @@ const morgan = require('morgan')
 const Person = require('./models/person.js')
 const app = express()
 
-morgan.token('body', (request, response) => { 
+morgan.token('body', (request) => {
   return JSON.stringify(request.body)
 })
 
@@ -13,7 +13,6 @@ app.use(express.static('dist'))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body '))
 
 const errorHandler = (error, request, response, next) => {
-  console.log("ERROR HANDLER");
   console.error(error.name)
   console.error(error.message)
   if (error.name === 'CastError') {
